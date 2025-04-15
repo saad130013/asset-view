@@ -66,13 +66,25 @@ try:
             "National Address ID", "Building Number", "Floors Number", "Room/office Number"
         ]
         general_data = {field: asset_row.get(field) for field in general_fields if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available" if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available"}
-        df_general = pd.DataFrame([(f"📝 " + arabic_labels.get(k.replace("📝 ", "").strip(), k.replace("📝 ", "")), v) for k, v in general_data.items()], columns=["🧾 اسم الحقل", "القيمة"])
-        # استخراج الإحداثيات (إذا كانت موجودة) ثم حذفها من جدول العرض
+        # استخراج الإحداثيات
 geo = general_data.pop("Geographical Coordinates", None)
 
-df_general = pd.DataFrame([(f"📝 " + arabic_labels.get(k.strip(), k.strip()), v) for k, v in general_data.items()],
+# عرض المعلومات العامة
+df_general = pd.DataFrame([(f"📝 " + arabic_labels.get(k.strip(), k.strip()), v)
+                           for k, v in general_data.items()],
                           columns=["🧾 اسم الحقل", "القيمة"])
 st.markdown(df_general.to_html(classes='custom-table', index=False, escape=False), unsafe_allow_html=True)
+
+# عرض الخريطة إذا الإحداثيات موجودة
+if geo and isinstance(geo, str) and "," in geo:
+    lat_lon = geo.split(",")
+    if len(lat_lon) == 2:
+        try:
+            lat, lon = float(lat_lon[0]), float(lat_lon[1])
+            st.markdown("### 🗺️ موقع الأصل على الخريطة")
+            st.map(pd.DataFrame({'lat': [lat], 'lon': [lon]}))
+        except ValueError:
+            st.warning("⚠️ لم يتم عرض الخريطة: صيغة الإحداثيات غير صحيحة."), unsafe_allow_html=True)
 
 # عرض الخريطة إذا الإحداثيات موجودة وصحيحة
 if geo and isinstance(geo, str) and "," in geo:
