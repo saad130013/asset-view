@@ -62,7 +62,7 @@ try:
             "Useful Life", "Remaining useful life", "Country", "Region", "City", "Geographical Coordinates",
             "National Address ID", "Building Number", "Floors Number", "Room/office Number"
         ]
-        general_data = {f"📝 {field}": asset_row.get(field, "غير متوفر") for field in general_fields}
+        general_data = {f"📝 {field}": asset_row.get(field) for field in general_fields if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available"}
         df_general = pd.DataFrame([(f"📝 {k}", v) for k, v in general_data.items()], columns=["🧾 اسم الحقل", "القيمة"])
         st.markdown(df_general.to_html(classes='custom-table', index=False, escape=False), unsafe_allow_html=True)
 
