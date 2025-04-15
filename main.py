@@ -8,7 +8,6 @@ uploaded_file = st.file_uploader("📂 حمّل ملف الأصول مع الت�
 
 if uploaded_file:
     try:
-        # قراءة الملف من الصف الثاني
         df = pd.read_excel(uploaded_file, header=1)
         df.columns = df.columns.str.strip()
 
@@ -28,13 +27,59 @@ if uploaded_file:
             st.markdown(f"- **التكلفة:** {asset_row['Cost']} ريال")
 
             if st.button("عرض التفاصيل المحاسبية"):
-                st.subheader("🧾 التفاصيل المحاسبية")
-                st.markdown(f"- **كود الأصل المحاسبي:** {asset_row['Asset Code For Accounting Purpose']}")
-                st.markdown(f"- **المجموعة المحاسبية:** {asset_row['accounting group Arabic Description']} ({asset_row['accounting group Code']})")
-                st.markdown("### 🧩 التصنيفات المحاسبية:")
-                st.markdown(f"- **المستوى 1:** {asset_row['Level 1 FA Module - Arabic Description']} ({asset_row['Level 1 FA Module Code']})")
-                st.markdown(f"- **المستوى 2:** {asset_row['Level 2 FA Module - Arabic Description']} ({asset_row['Level 2 FA Module Code']})")
-                st.markdown(f"- **المستوى 3:** {asset_row['Level 3 FA Module - Arabic Description']} ({asset_row['Level 3 FA Module Code']})")
+                st.subheader("🧾 التصنيف المحاسبي")
+                html_table = f"""
+<style>
+    .styled-table {{
+        border-collapse: collapse;
+        margin: 15px 0;
+        font-size: 16px;
+        min-width: 400px;
+        direction: rtl;
+        text-align: center;
+    }}
+    .styled-table th,
+    .styled-table td {{
+        padding: 10px 20px;
+        border: 1px solid #ccc;
+    }}
+    .styled-table th {{
+        background-color: #f4f4f4;
+    }}
+</style>
+<table class="styled-table">
+    <thead>
+        <tr>
+            <th>الكود</th>
+            <th>الوصف بالإنجليزية</th>
+            <th>الوصف بالعربية</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>{{level1_code}}</td><td>{{level1_en}}</td><td>{{level1_ar}}</td></tr>
+        <tr><td>{{level2_code}}</td><td>{{level2_en}}</td><td>{{level2_ar}}</td></tr>
+        <tr><td>{{level3_code}}</td><td>{{level3_en}}</td><td>{{level3_ar}}</td></tr>
+        <tr><td>{{group_code}}</td><td>{{group_en}}</td><td>{{group_ar}}</td></tr>
+        <tr><td>{{asset_code}}</td><td colspan="2">كود الأصل المحاسبي</td></tr>
+    </tbody>
+</table>
+"""
+                html_table = html_table.format(
+                    level1_code=asset_row['Level 1 FA Module Code'],
+                    level1_en=asset_row['Level 1 FA Module - English Description'],
+                    level1_ar=asset_row['Level 1 FA Module - Arabic Description'],
+                    level2_code=asset_row['Level 2 FA Module Code'],
+                    level2_en=asset_row['Level 2 FA Module - English Description'],
+                    level2_ar=asset_row['Level 2 FA Module - Arabic Description'],
+                    level3_code=asset_row['Level 3 FA Module Code'],
+                    level3_en=asset_row['Level 3 FA Module - English Description'],
+                    level3_ar=asset_row['Level 3 FA Module - Arabic Description'],
+                    group_code=asset_row['accounting group Code'],
+                    group_en=asset_row['accounting group English Description'],
+                    group_ar=asset_row['accounting group Arabic Description'],
+                    asset_code=asset_row['Asset Code For Accounting Purpose']
+                )
+                st.components.v1.html(html_table, height=420, scrolling=True)
         else:
             if search_input:
                 st.warning("لا توجد أصول مطابقة للبحث.")
