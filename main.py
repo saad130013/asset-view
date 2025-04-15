@@ -2,6 +2,9 @@
 import streamlit as st
 import pandas as pd
 
+# مسميات الحقول بالعربية
+arabic_labels = {'Custodian': 'المستلم', 'Consolidated Code': 'الرمز الموحد', 'Unique Asset Number in MoF system': 'الرقم الموحد في وزارة المالية', 'Linked/Associated Asset': 'الأصل المرتبط', 'Unique Asset Number in the entity': 'الرقم الموحد في الجهة', 'Asset Description': 'وصف الأصل', 'Tag number': 'رقم الوسم', 'Base Unit of Measure': 'وحدة القياس', 'Quantity': 'الكمية', 'Manufacturer': 'الشركة المصنعة', 'Date Placed in Service': 'تاريخ التشغيل', 'Cost': 'التكلفة', 'Depreciation amount': 'مبلغ الإهلاك', 'Accumulated Depreciation': 'الإهلاك المتراكم', 'Residual Value': 'القيمة المتبقية', 'Net Book Value': 'القيمة الدفترية', 'Useful Life': 'العمر الإنتاجي', 'Remaining useful life': 'العمر المتبقي', 'Country': 'الدولة', 'Region': 'المنطقة', 'City': 'المدينة', 'Geographical Coordinates': 'الإحداثيات الجغرافية', 'National Address ID': 'العنوان الوطني', 'Building Number': 'رقم المبنى', 'Floors Number': 'عدد الطوابق', 'Room/office Number': 'رقم الغرفة / المكتب'}
+
 st.set_page_config(page_title="نظام إدارة الأصول", layout="wide")
 st.markdown("""
 <style>
@@ -62,8 +65,8 @@ try:
             "Useful Life", "Remaining useful life", "Country", "Region", "City", "Geographical Coordinates",
             "National Address ID", "Building Number", "Floors Number", "Room/office Number"
         ]
-        general_data = {f"📝 {field}": asset_row.get(field) for field in general_fields if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available"}
-        df_general = pd.DataFrame([(f"📝 {k}", v) for k, v in general_data.items()], columns=["🧾 اسم الحقل", "القيمة"])
+        general_data = {field: asset_row.get(field) for field in general_fields if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available" if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available"}
+        df_general = pd.DataFrame([(f"📝 " + arabic_labels.get(k.replace("📝 ", "").strip(), k.replace("📝 ", "")), v) for k, v in general_data.items()], columns=["🧾 اسم الحقل", "القيمة"])
         st.markdown(df_general.to_html(classes='custom-table', index=False, escape=False), unsafe_allow_html=True)
 
         if st.button("📘 عرض التفاصيل المحاسبية"):
