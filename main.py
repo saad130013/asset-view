@@ -8,7 +8,7 @@ uploaded_file = st.file_uploader("📂 حمّل ملف الأصول (Excel)", ty
 
 if uploaded_file:
     try:
-        df = pd.read_excel(uploaded_file)
+        df = pd.read_excel(uploaded_file, header=1)
         df.columns = df.columns.str.strip()
 
         # عرض مربع البحث
