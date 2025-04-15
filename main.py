@@ -54,10 +54,16 @@ try:
 
         st.markdown("### 🧾 المعلومات العامة للأصل")
         general_fields = [
-            ["Custodian", "Consolidated Code", "Unique Asset Number in MoF system", "Linked/Associated Asset", "Unique Asset Number in the entity", "Asset Description", "Tag number", "Base Unit of Measure", "Quantity", "Manufacturer", "Date Placed in Service", "Cost", "Depreciation amount", "Accumulated Depreciation", "Residual Value", "Net Book Value", "Useful Life", "Remaining useful life", "Country", "Region", "City", "Geographical Coordinates", "National Address ID", "Building Number", "Floors Number", "Room/office Number"]
+            "Asset Description For Maintenance Purpose", "Asset Functional Code", "GL account", "Cost Center",
+            "Asset Owner", "Custodian", "Consolidated Code", "Unique Asset Number in MoF system",
+            "Linked/Associated Asset", "Unique Asset Number in the entity", "Asset Description", "Tag number",
+            "Base Unit of Measure", "Quantity", "Manufacturer", "Date Placed in Service", "Cost",
+            "Depreciation amount", "Accumulated Depreciation", "Residual Value", "Net Book Value",
+            "Useful Life", "Remaining useful life", "Country", "Region", "City", "Geographical Coordinates",
+            "National Address ID", "Building Number", "Floors Number", "Room/office Number"
         ]
         general_data = {f"📝 {field}": asset_row.get(field, "غير متوفر") for field in general_fields}
-        df_general = pd.DataFrame(general_data.items(), columns=["🧾 اسم الحقل", "القيمة"])
+        df_general = pd.DataFrame([(f"📝 {k}", v) for k, v in general_data.items()], columns=["🧾 اسم الحقل", "القيمة"])
         st.markdown(df_general.to_html(classes='custom-table', index=False, escape=False), unsafe_allow_html=True)
 
         if st.button("📘 عرض التفاصيل المحاسبية"):
