@@ -87,10 +87,6 @@ with tab2:
     if user_desc:
         found = False
         for word in user_desc.split():
-            if word in classification_map:
-                result = classification_map[word]
-                st.success("✅ تم التعرف على التصنيف:")
-
                 code_1 = df[df["Level 1 FA Module - Arabic Description"] == result["Level 1"]]["Level 1 FA Module Code"].dropna().astype(str).values
                 code_2 = df[df["Level 2 FA Module - Arabic Description"] == result["Level 2"]]["Level 2 FA Module Code"].dropna().astype(str).values
                 code_3 = df[df["Level 3 FA Module - Arabic Description"] == result["Level 3"]]["Level 3 FA Module Code"].dropna().astype(str).values
@@ -113,14 +109,3 @@ with tab2:
 
         found = False
         for word in user_desc.split():
-            if word in classification_map:
-                result = classification_map[word]
-                st.success("✅ تم التعرف على التصنيف:")
-                st.markdown(f"- **المستوى 1:** {result['Level 1']}")
-                st.markdown(f"- **المستوى 2:** {result['Level 2']}")
-                st.markdown(f"- **المستوى 3:** {result['Level 3']}")
-                st.markdown(f"- **المجموعة المحاسبية:** {result['Group']}")
-                found = True
-                break
-        if not found:
-            st.error("❌ لا يمكن تحديد التصنيف بناءً على هذا الوصف.")
