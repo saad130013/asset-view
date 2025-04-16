@@ -75,48 +75,49 @@ with tab1:
     try:
         df = pd.read_excel("assetv4.xlsx", header=1)
         df.columns = df.columns.str.strip()
-
+        
         search_input = st.text_input("🔍 ابحث باسم الأصل").strip().lower()
-
+        
         filtered_options = df[
         df["Asset Description For Maintenance Purpose"].astype(str).str.lower().str.contains(search_input, na=False)
         ]["Asset Description For Maintenance Purpose"].dropna().unique().tolist()
-
+        
         if filtered_options:
-            selected_description = st.selectbox("📄 اختر الأصل من القائمة:", filtered_options)
-
-            asset_row = df[df["Asset Description For Maintenance Purpose"] == selected_description].iloc[0]
-
-            st.markdown("### 🧾 المعلومات العامة للأصل")
-
-            general_fields = [
-            "Custodian", "Consolidated Code", "Unique Asset Number in MoF system",
-            "Linked/Associated Asset", "Unique Asset Number in the entity", "Asset Description", "Tag number",
-            "Base Unit of Measure", "Quantity", "Manufacturer", "Date Placed in Service", "Cost",
-            "Depreciation amount", "Accumulated Depreciation", "Residual Value", "Net Book Value",
-            "Useful Life", "Remaining useful life", "Country", "Region", "City",
-            "Geographical Coordinates", "National Address ID", "Building Number", "Floors Number", "Room/office Number"
-            ]
-
-            general_data = {field: asset_row.get(field) for field in general_fields if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available"}
-
-            # استخراج الإحداثيات وفصلها عن باقي الجدول
-            geo = general_data.pop("Geographical Coordinates", None)
-
-            df_general = pd.DataFrame([(f"📝 " + arabic_labels.get(k.strip(), k.strip()), v)
-            for k, v in general_data.items()],
-            columns=["🧾 اسم الحقل", "القيمة"])
-            st.markdown(df_general.to_html(classes='custom-table', index=False, escape=False), unsafe_allow_html=True)
-
+        selected_description = st.selectbox("📄 اختر الأصل من القائمة:", filtered_options)
+        
+        asset_row = df[df["Asset Description For Maintenance Purpose"] == selected_description].iloc[0]
+        
+        st.markdown("### 🧾 المعلومات العامة للأصل")
+        
+        general_fields = [
+        "Custodian", "Consolidated Code", "Unique Asset Number in MoF system",
+        "Linked/Associated Asset", "Unique Asset Number in the entity", "Asset Description", "Tag number",
+        "Base Unit of Measure", "Quantity", "Manufacturer", "Date Placed in Service", "Cost",
+        "Depreciation amount", "Accumulated Depreciation", "Residual Value", "Net Book Value",
+        "Useful Life", "Remaining useful life", "Country", "Region", "City",
+        "Geographical Coordinates", "National Address ID", "Building Number", "Floors Number", "Room/office Number"
+        ]
+        
+        general_data = {field: asset_row.get(field) for field in general_fields if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available"}
+        
+        # استخراج الإحداثيات وفصلها عن باقي الجدول
+        geo = general_data.pop("Geographical Coordinates", None)
+        
+        df_general = pd.DataFrame([(f"📝 " + arabic_labels.get(k.strip(), k.strip()), v)
+        for k, v in general_data.items()],
+        columns=["🧾 اسم الحقل", "القيمة"])
+        st.markdown(df_general.to_html(classes='custom-table', index=False, escape=False), unsafe_allow_html=True)
+        
         if geo and isinstance(geo, str) and "," in geo:
-            lat_lon = geo.split(",")
+        lat_lon = geo.split(",")
         if len(lat_lon) == 2:
     try:
-            lat, lon = float(lat_lon[0]), float(lat_lon[1])
-            st.markdown("### 🗺️ موقع الأصل على الخريطة")
-            st.map(pd.DataFrame({'lat': [lat], 'lon': [lon]}))
+        lat, lon = float(lat_lon[0]), float(lat_lon[1])
+        st.markdown("### 🗺️ موقع الأصل على الخريطة")
+        st.map(pd.DataFrame({'lat': [lat], 'lon': [lon]}))
     except Exception as e:
         st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
+    st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
     st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
     st.warning("⚠️ لم يتم عرض الخريطة: صيغة الإحداثيات غير صحيحة.")
     
@@ -140,6 +141,7 @@ with tab1:
     st.warning("❌ لا توجد أصول مطابقة للبحث.")
     except Exception as e:
         st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
+    st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
     st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
     st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
     
