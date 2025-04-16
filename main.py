@@ -146,41 +146,41 @@ with tab1:
     
     
 with tab2:
-st.markdown("### 🤖 تصنيف محاسبي تلقائي باستخدام الذكاء الصناعي")
+    st.markdown("### 🤖 تصنيف محاسبي تلقائي باستخدام الذكاء الصناعي")
     user_desc = st.text_input("✍️ أدخل وصف الأصل").strip().lower()
     
     # بناء قاعدة مبسطة من الملف
     desc_df = df[[
-        "Asset Description",
-        "Level 1 FA Module - Arabic Description",
-        "Level 2 FA Module - Arabic Description",
-        "Level 3 FA Module - Arabic Description",
-        "accounting group Arabic Description"
+    "Asset Description",
+    "Level 1 FA Module - Arabic Description",
+    "Level 2 FA Module - Arabic Description",
+    "Level 3 FA Module - Arabic Description",
+    "accounting group Arabic Description"
     ]].dropna().drop_duplicates()
-
+    
     classification_map = {}
     for _, row in desc_df.iterrows():
-        words = str(row["Asset Description"]).strip().lower().split()
-        for word in words:
-            if word not in classification_map:
-                classification_map[word] = {
-                    "Level 1": row["Level 1 FA Module - Arabic Description"],
-                    "Level 2": row["Level 2 FA Module - Arabic Description"],
-                    "Level 3": row["Level 3 FA Module - Arabic Description"],
-                    "Group": row["accounting group Arabic Description"]
-                }
-
+    words = str(row["Asset Description"]).strip().lower().split()
+    for word in words:
+    if word not in classification_map:
+    classification_map[word] = {
+    "Level 1": row["Level 1 FA Module - Arabic Description"],
+    "Level 2": row["Level 2 FA Module - Arabic Description"],
+    "Level 3": row["Level 3 FA Module - Arabic Description"],
+    "Group": row["accounting group Arabic Description"]
+    }
+    
     if user_desc:
         found = False
         for word in user_desc.split():
-            if word in classification_map:
-                result = classification_map[word]
-                st.success("✅ تم التعرف على التصنيف:")
-                st.markdown(f"- **المستوى 1:** {result['Level 1']}")
-                st.markdown(f"- **المستوى 2:** {result['Level 2']}")
-                st.markdown(f"- **المستوى 3:** {result['Level 3']}")
-                st.markdown(f"- **المجموعة المحاسبية:** {result['Group']}")
-                found = True
-                break
+        if word in classification_map:
+        result = classification_map[word]
+        st.success("✅ تم التعرف على التصنيف:")
+        st.markdown(f"- **المستوى 1:** {result['Level 1']}")
+        st.markdown(f"- **المستوى 2:** {result['Level 2']}")
+        st.markdown(f"- **المستوى 3:** {result['Level 3']}")
+        st.markdown(f"- **المجموعة المحاسبية:** {result['Group']}")
+        found = True
+        break
         if not found:
-            st.error("❌ لا يمكن تحديد التصنيف بناءً على هذا الوصف.")
+        st.error("❌ لا يمكن تحديد التصنيف بناءً على هذا الوصف.")
