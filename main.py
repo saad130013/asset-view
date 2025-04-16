@@ -1,134 +1,135 @@
 import streamlit as st
 import pandas as pd
-import torch
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from transformers import AutoTokenizer, AutoModel
 
-# ========== إعداد التطبيق الأساسي ==========
-st.set_page_config(
-    page_title="🦉 النظام الذكي لاقتراح الأصول",
-    page_icon="🏢",
-    layout="wide"
-)
+st.set_page_config(page_title="نظام إدارة الأصول الذكي", layout="wide")
+st.title("📊 نظام إدارة الأصول - الهيئة الجيولوجية السعودية")
 
-# ========== تنسيق CSS مخصص ==========
-st.markdown("""
-<style>
-    .stTextInput input {
-        border: 2px solid #2e86c1 !important;
-        border-radius: 10px;
-        padding: 12px;
-    }
-    .stMarkdown h3 {
-        color: #27ae60;
-        border-bottom: 2px solid #3498db;
-    }
-    .result-card {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-</style>
-""", unsafe_allow_html=True)
+# تحميل البيانات
+df = pd.read_excel("assetv4.xlsx", header=1)
+df.columns = df.columns.str.strip()
 
-# ========== تحميل البيانات ==========
-@st.cache_data
-def load_data():
+# تهيئة نموذج TF-IDF (مُضاف)
+descriptions_list = df['Asset Description For Maintenance Purpose'].dropna().tolist()
+vectorizer = TfidfVectorizer()
+tfidf_matrix = vectorizer.fit_transform(descriptions_list)
+
+# أسماء عربية للعرض
+arabic_labels = {
+    "Custodian": "المستلم", "Consolidated Code": "الرمز الموحد", 
+    "Unique Asset Number in MoF system": "الرقم الموحد في وزارة المالية",
+    "Linked/Associated Asset": "الأصل المرتبط", 
+    "Unique Asset Number in the entity": "الرقم الموحد في الجهة",
+    "Asset Description": "وصف الأصل", "Tag number": "رقم الوسم", 
+    "Base Unit of Measure": "وحدة القياس",
+    "Quantity": "الكمية", "Manufacturer": "الشركة المصنعة", 
+    "Date Placed in Service": "تاريخ التشغيل",
+    "Cost": "التكلفة", "Depreciation amount": "مبلغ الإهلاك", 
+    "Accumulated Depreciation": "الإهلاك المتراكم",
+    "Residual Value": "القيمة المتبقية", "Net Book Value": "القيمة الدفترية", 
+    "Useful Life": "العمر الإنتاجي",
+    "Remaining useful life": "العمر المتبقي", "Country": "الدولة", 
+    "Region": "المنطقة", "City": "المدينة",
+    "Geographical Coordinates": "الإحداثيات الجغرافية", 
+    "National Address ID": "العنوان الوطني",
+    "Building Number": "رقم المبنى", "Floors Number": "عدد الطوابق", 
+    "Room/office Number": "رقم الغرفة / المكتب"
+}
+
+# التبويبات
+tab1, tab2 = st.tabs(["🔎 البحث عن أصل", "🤖 التصنيف المحاسبي الذكي"])
+
+with tab1:
     try:
-        df = pd.read_excel("assetv4.xlsx", header=1)
-        df.columns = df.columns.str.strip()
-        return df
+        search_input = st.text_input("🔍 ابحث باسم الأصل").strip().lower()
+        filtered_options = df[
+            df["Asset Description For Maintenance Purpose"].astype(str).str.lower().str.contains(search_input, na=False)
+        ]["Asset Description For Maintenance Purpose"].dropna().unique().tolist()
+
+        if filtered_options:
+            selected_description = st.selectbox("📄 اختر الأصل من القائمة:", filtered_options, key="select_asset_desc")
+
+            asset_row = df[df["Asset Description For Maintenance Purpose"] == selected_description].iloc[0]
+
+            # عرض المعلومات العامة
+            general_fields = [
+                "Custodian", "Consolidated Code", "Unique Asset Number in MoF system",
+                "Linked/Associated Asset", "Unique Asset Number in the entity", "Asset Description", "Tag number",
+                "Base Unit of Measure", "Quantity", "Manufacturer", "Date Placed in Service", "Cost",
+                "Depreciation amount", "Accumulated Depreciation", "Residual Value", "Net Book Value",
+                "Useful Life", "Remaining useful life", "Country", "Region", "City",
+                "Geographical Coordinates", "National Address ID", "Building Number", "Floors Number", "Room/office Number"
+            ]
+            general_data = {field: asset_row.get(field) for field in general_fields if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available"}
+
+            geo = general_data.pop("Geographical Coordinates", None)
+
+            st.subheader("📋 المعلومات العامة")
+            table_data = [(f"📝 {arabic_labels.get(k, k)}", v) for k, v in general_data.items()]
+            st.table(pd.DataFrame(table_data, columns=["🧾 اسم الحقل", "القيمة"]))
+
+            if geo and isinstance(geo, str) and "," in geo:
+                try:
+                    lat, lon = map(float, geo.split(","))
+                    st.markdown("### 🗺️ موقع الأصل على الخريطة")
+                    st.map(pd.DataFrame({'lat': [lat], 'lon': [lon]}))
+                except:
+                    st.warning("⚠️ لم يتم عرض الخريطة: صيغة الإحداثيات غير صحيحة.")
+
+            if st.button("📘 عرض التفاصيل المحاسبية"):
+                def get_safe(key):
+                    val = asset_row.get(key, "")
+                    return "غير متوفر" if pd.isna(val) or val == "" else val
+
+                accounting_df = pd.DataFrame([
+                    ["🎯 " + get_safe("Level 1 FA Module Code"), get_safe("Level 1 FA Module - English Description"), get_safe("Level 1 FA Module - Arabic Description")],
+                    ["🏷️ " + get_safe("Level 2 FA Module Code"), get_safe("Level 2 FA Module - English Description"), get_safe("Level 2 FA Module - Arabic Description")],
+                    ["🔒 " + get_safe("Level 3 FA Module Code"), get_safe("Level 3 FA Module - English Description"), get_safe("Level 3 FA Module - Arabic Description")],
+                    ["💼 " + get_safe("accounting group Code"), get_safe("accounting group English Description"), get_safe("accounting group Arabic Description")],
+                    ["📦 " + get_safe("Asset Code For Accounting Purpose"), "Asset Code For Accounting Purpose", "—"]
+                ], columns=["الكود", "الوصف بالإنجليزية", "الوصف بالعربية"])
+                st.table(accounting_df)
+
+        elif search_input:
+            st.warning("❌ لا توجد أصول مطابقة للبحث.")
     except Exception as e:
-        st.error(f"🚨 خطأ في تحميل الملف: {str(e)}")
-        st.stop()
+        st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
 
-df = load_data()
-asset_descriptions = df["Asset Description For Maintenance Purpose"].dropna().astype(str).unique().tolist()
+with tab2:
+    user_desc = st.text_input("🧠 أدخل وصف الأصل لتصنيفه تلقائيًا:")
 
-# ========== تحميل النموذج ==========
-@st.cache_resource
-def load_bert_model():
-    try:
-        tokenizer = AutoTokenizer.from_pretrained("asafaya/bert-base-arabic")
-        model = AutoModel.from_pretrained("asafaya/bert-base-arabic")
-        return tokenizer, model
-    except Exception as e:
-        st.error(f"🤖 خطأ في تحميل النموذج: {str(e)}")
-        st.stop()
-
-tokenizer, model = load_bert_model()
-
-# ========== توليد التضمينات ==========
-@st.cache_data
-def generate_embeddings():
-    embeddings = []
-    for desc in asset_descriptions:
-        try:
-            inputs = tokenizer(desc, return_tensors="pt", truncation=True, padding=True, max_length=32)
-            with torch.no_grad():
-                outputs = model(**inputs)
-            embedding = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
-            embeddings.append(embedding)
-        except:
-            embeddings.append([0.0]*768)
-    return embeddings
-
-embeddings = generate_embeddings()
-
-# ========== واجهة المستخدم ==========
-st.title("🤖 نظام اقتراح الأصول باستخدام BERT العربي")
-user_input = st.text_input("✍️ اكتب وصف الأصل", placeholder="مثال: جهاز كمبيوتر محمول من نوع ديل")
-
-# ========== معالجة البحث ==========
-if user_input:
-    with st.spinner('🔎 جاري البحث في قاعدة البيانات...'):
-        try:
-            # توليد تضمين الاستعلام
-            inputs = tokenizer(user_input, return_tensors="pt", truncation=True, padding=True, max_length=32)
-            with torch.no_grad():
-                outputs = model(**inputs)
-            query_embedding = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+    if user_desc:
+        found = False
+        for word in user_desc.split():
+            user_vec = vectorizer.transform([word])
+            similarities = cosine_similarity(user_vec, tfidf_matrix)
+            top_index = similarities.argmax()
+            top_desc = descriptions_list[top_index]
+            match_row = df[df['Asset Description For Maintenance Purpose'] == top_desc].iloc[0]
             
-            # حساب التشابه
-            similarities = cosine_similarity([query_embedding], embeddings)[0]
-            top_indices = similarities.argsort()[-5:][::-1]
+            table_data = [
+                ['🎯 ' + str(match_row.get('Level 1 FA Module Code', '—')), 
+                 match_row.get('Level 1 FA Module - Arabic Description', '—'), 
+                 'المستوى 1'],
+                ['🏷️ ' + str(match_row.get('Level 2 FA Module Code', '—')), 
+                 match_row.get('Level 2 FA Module - Arabic Description', '—'), 
+                 'المستوى 2'],
+                ['🔒 ' + str(match_row.get('Level 3 FA Module Code', '—')), 
+                 match_row.get('Level 3 FA Module - Arabic Description', '—'), 
+                 'المستوى 3'],
+                ['💼 ' + str(match_row.get('accounting group Code', '—')), 
+                 match_row.get('accounting group Arabic Description', '—'), 
+                 'المجموعة المحاسبية'],
+                ['📦 ' + str(match_row.get('Asset Code For Accounting Purpose', '—')), 
+                 'Asset Code For Accounting Purpose', 
+                 'الكود النهائي']
+            ]
             
-            # عرض النتائج
-            st.markdown("### 💡 أفضل 5 اقتراحات")
-            for idx in top_indices:
-                if similarities[idx] > 0.2:  # فلترة النتائج الضعيفة
-                    with st.container():
-                        st.markdown(f"""
-                        <div class="result-card">
-                            <h4>{asset_descriptions[idx]}</h4>
-                            <p style="color: #2e86c1;">مستوى التشابه: {similarities[idx]:.2f}</p>
-                            <p style="color: #27ae60;">الرمز: {df.iloc[idx]['Unique Asset Number in MoF system']}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-            
-            # رسم بياني للتشابه
-            st.markdown("### 📊 توزيع التشابه")
-            fig = pd.DataFrame({
-                'التشابه': similarities,
-                'الوصف': asset_descriptions
-            }).plot(kind='hist', title='توزيع درجات التشابه').figure
-            st.pyplot(fig)
-            
-        except Exception as e:
-            st.error(f"⛔ حدث خطأ غير متوقع: {str(e)}")
+            st.markdown('### 📘 نتيجة التصنيف')
+            st.table(pd.DataFrame(table_data, columns=['الكود', 'الوصف بالعربية', 'المستوى']))
+            found = True
+            break
 
-# ========== قسم المساعدة ==========
-with st.expander("ℹ️ تعليمات الاستخدام"):
-    st.markdown("""
-    **✨ ميزات النظام:**
-    - بحث ذكي باستخدام أحدث نماذج الذكاء الاصطناعي
-    - فلترة تلقائية للنتائج غير ذات الصلة
-    - عرض مرئي للنتائج مع تفاصيل كاملة
-    
-    **🎯 نصائح البحث:**
-    1. استخدم أوصافًا واضحة ومحددة
-    2. تجنب الأخطاء الإملائية
-    3. استخدم الكلمات المفتاحية المهمة
-    """)
+        if not found:
+            st.error("❌ لا يمكن تحديد التصنيف بناءً على هذا الوصف.")
