@@ -86,13 +86,22 @@ with tab2:
 
     if user_desc:
         found = False
-        for word in user_desc.split():
-                code_1 = df[df["Level 1 FA Module - Arabic Description"] == result["Level 1"]]["Level 1 FA Module Code"].dropna().astype(str).values
-                code_2 = df[df["Level 2 FA Module - Arabic Description"] == result["Level 2"]]["Level 2 FA Module Code"].dropna().astype(str).values
-                code_3 = df[df["Level 3 FA Module - Arabic Description"] == result["Level 3"]]["Level 3 FA Module Code"].dropna().astype(str).values
-                code_g = df[df["accounting group Arabic Description"] == result["Group"]]["accounting group Code"].dropna().astype(str).values
-                code_f = df[df["Asset Description"] == word]["Asset Code For Accounting Purpose"].dropna().astype(str).values
-
+    for word in user_desc.split():
+        user_vec = vectorizer.transform([word])
+        similarities = cosine_similarity(user_vec, tfidf_matrix)
+        top_index = similarities.argmax()
+        top_desc = descriptions_list[top_index]
+        match_row = df[df['Asset Description For Maintenance Purpose'] == top_desc].iloc[0]
+        table_data = [
+            ['🎯 ' + str(match_row.get('Level 1 FA Module Code', '—')), match_row.get('Level 1 FA Module - Arabic Description', '—'), 'المستوى 1'],
+            ['🏷️ ' + str(match_row.get('Level 2 FA Module Code', '—')), match_row.get('Level 2 FA Module - Arabic Description', '—'), 'المستوى 2'],
+            ['🔒 ' + str(match_row.get('Level 3 FA Module Code', '—')), match_row.get('Level 3 FA Module - Arabic Description', '—'), 'المستوى 3'],
+            ['💼 ' + str(match_row.get('accounting group Code', '—')), match_row.get('accounting group Arabic Description', '—'), 'المجموعة المحاسبية'],
+            ['📦 ' + str(match_row.get('Asset Code For Accounting Purpose', '—')), 'Asset Code For Accounting Purpose', 'الكود النهائي']
+        ]
+        st.markdown('### 📘 نتيجة التصنيف')
+        st.table(pd.DataFrame(table_data, columns=['الكود', 'الوصف بالعربية', 'المستوى']))
+        break
                 table_data = [
                     ["🎯 " + (code_1[0] if len(code_1) > 0 else "—"), result["Level 1"], "المستوى 1"],
                     ["🏷️ " + (code_2[0] if len(code_2) > 0 else "—"), result["Level 2"], "المستوى 2"],
@@ -108,4 +117,19 @@ with tab2:
             st.error("❌ لا يمكن تحديد التصنيف بناءً على هذا الوصف.")
 
         found = False
-        for word in user_desc.split():
+    for word in user_desc.split():
+        user_vec = vectorizer.transform([word])
+        similarities = cosine_similarity(user_vec, tfidf_matrix)
+        top_index = similarities.argmax()
+        top_desc = descriptions_list[top_index]
+        match_row = df[df['Asset Description For Maintenance Purpose'] == top_desc].iloc[0]
+        table_data = [
+            ['🎯 ' + str(match_row.get('Level 1 FA Module Code', '—')), match_row.get('Level 1 FA Module - Arabic Description', '—'), 'المستوى 1'],
+            ['🏷️ ' + str(match_row.get('Level 2 FA Module Code', '—')), match_row.get('Level 2 FA Module - Arabic Description', '—'), 'المستوى 2'],
+            ['🔒 ' + str(match_row.get('Level 3 FA Module Code', '—')), match_row.get('Level 3 FA Module - Arabic Description', '—'), 'المستوى 3'],
+            ['💼 ' + str(match_row.get('accounting group Code', '—')), match_row.get('accounting group Arabic Description', '—'), 'المجموعة المحاسبية'],
+            ['📦 ' + str(match_row.get('Asset Code For Accounting Purpose', '—')), 'Asset Code For Accounting Purpose', 'الكود النهائي']
+        ]
+        st.markdown('### 📘 نتيجة التصنيف')
+        st.table(pd.DataFrame(table_data, columns=['الكود', 'الوصف بالعربية', 'المستوى']))
+        break
