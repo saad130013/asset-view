@@ -102,6 +102,21 @@ with tab2:
         st.markdown('### 📘 نتيجة التصنيف')
         st.table(pd.DataFrame(table_data, columns=['الكود', 'الوصف بالعربية', 'المستوى']))
         break
+        user_vec = vectorizer.transform([word])
+        similarities = cosine_similarity(user_vec, tfidf_matrix)
+        top_index = similarities.argmax()
+        top_desc = descriptions_list[top_index]
+        match_row = df[df['Asset Description For Maintenance Purpose'] == top_desc].iloc[0]
+        table_data = [
+            ['🎯 ' + str(match_row.get('Level 1 FA Module Code', '—')), match_row.get('Level 1 FA Module - Arabic Description', '—'), 'المستوى 1'],
+            ['🏷️ ' + str(match_row.get('Level 2 FA Module Code', '—')), match_row.get('Level 2 FA Module - Arabic Description', '—'), 'المستوى 2'],
+            ['🔒 ' + str(match_row.get('Level 3 FA Module Code', '—')), match_row.get('Level 3 FA Module - Arabic Description', '—'), 'المستوى 3'],
+            ['💼 ' + str(match_row.get('accounting group Code', '—')), match_row.get('accounting group Arabic Description', '—'), 'المجموعة المحاسبية'],
+            ['📦 ' + str(match_row.get('Asset Code For Accounting Purpose', '—')), 'Asset Code For Accounting Purpose', 'الكود النهائي']
+        ]
+        st.markdown('### 📘 نتيجة التصنيف')
+        st.table(pd.DataFrame(table_data, columns=['الكود', 'الوصف بالعربية', 'المستوى']))
+        break
                 table_data = [
                     ["🎯 " + (code_1[0] if len(code_1) > 0 else "—"), result["Level 1"], "المستوى 1"],
                     ["🏷️ " + (code_2[0] if len(code_2) > 0 else "—"), result["Level 2"], "المستوى 2"],
@@ -115,9 +130,23 @@ with tab2:
                 break
         if not found:
             st.error("❌ لا يمكن تحديد التصنيف بناءً على هذا الوصف.")
-
         found = False
     for word in user_desc.split():
+        user_vec = vectorizer.transform([word])
+        similarities = cosine_similarity(user_vec, tfidf_matrix)
+        top_index = similarities.argmax()
+        top_desc = descriptions_list[top_index]
+        match_row = df[df['Asset Description For Maintenance Purpose'] == top_desc].iloc[0]
+        table_data = [
+            ['🎯 ' + str(match_row.get('Level 1 FA Module Code', '—')), match_row.get('Level 1 FA Module - Arabic Description', '—'), 'المستوى 1'],
+            ['🏷️ ' + str(match_row.get('Level 2 FA Module Code', '—')), match_row.get('Level 2 FA Module - Arabic Description', '—'), 'المستوى 2'],
+            ['🔒 ' + str(match_row.get('Level 3 FA Module Code', '—')), match_row.get('Level 3 FA Module - Arabic Description', '—'), 'المستوى 3'],
+            ['💼 ' + str(match_row.get('accounting group Code', '—')), match_row.get('accounting group Arabic Description', '—'), 'المجموعة المحاسبية'],
+            ['📦 ' + str(match_row.get('Asset Code For Accounting Purpose', '—')), 'Asset Code For Accounting Purpose', 'الكود النهائي']
+        ]
+        st.markdown('### 📘 نتيجة التصنيف')
+        st.table(pd.DataFrame(table_data, columns=['الكود', 'الوصف بالعربية', 'المستوى']))
+        break
         user_vec = vectorizer.transform([word])
         similarities = cosine_similarity(user_vec, tfidf_matrix)
         top_index = similarities.argmax()
