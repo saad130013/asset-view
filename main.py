@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import torch
@@ -9,26 +8,38 @@ st.set_page_config(page_title="اقتراحات BERT الذكية", layout="wide
 st.title("🤖 نظام اقتراح وصف الأصل باستخدام BERT")
 
 # تحميل البيانات
-df = pd.read_excel("assetv4.xlsx", header=1)
-df.columns = df.columns.str.strip()
-asset_descriptions = df["Asset Description For Maintenance Purpose"].dropna().astype(str).unique().tolist()
+try:
+    df = pd.read_excel("assetv4.xlsx", header=1)
+    df.columns = df.columns.str.strip()
+    asset_descriptions = df["Asset Description For Maintenance Purpose"].dropna().astype(str).unique().tolist()
+except Exception as e:
+    st.error(f"❌ خطأ في تحميل الملف: {str(e)}")
+    st.stop()
 
 # تحميل BERT العربي
 @st.cache_resource
 def load_model():
-    tokenizer = AutoTokenizer.from_pretrained("asafaya/bert-base-arabic")
-    model = AutoModel.from_pretrained("asafaya/bert-base-arabic")
-    return tokenizer, model
+    try:
+        tokenizer = AutoTokenizer.from_pretrained("asafaya/bert-base-arabic")
+        model = AutoModel.from_pretrained("asafaya/bert-base-arabic")
+        return tokenizer, model
+    except Exception as e:
+        st.error(f"❌ خطأ في تحميل النموذج: {str(e)}")
+        st.stop()
 
 tokenizer, model = load_model()
 
 # دالة لاستخراج التضمين من BERT
 def get_embedding(text):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=32)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    embedding = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
-    return embedding
+    try:
+        inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=32)
+        with torch.no_grad():
+            outputs = model(**inputs)
+        embedding = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+        return embedding
+    except Exception as e:
+        st.error(f"❌ خطأ في توليد التضمين: {str(e)}")
+        return None
 
 # تجهيز التضمينات مسبقاً
 @st.cache_resource
@@ -37,9 +48,10 @@ def embed_all_descriptions():
     for desc in asset_descriptions:
         try:
             emb = get_embedding(desc)
-            embeddings.append(emb)
+            if emb is not None:
+                embeddings.append(emb)
         except:
-            embeddings.append([0]*768)
+            embeddings.append([0.0]*768)  # متجه فارغ كاحتياطي
     return embeddings
 
 description_embeddings = embed_all_descriptions()
@@ -49,8 +61,12 @@ user_input = st.text_input("✍️ اكتب وصف الأصل")
 
 if user_input:
     query_vec = get_embedding(user_input)
-    similarities = cosine_similarity([query_vec], description_embeddings)[0]
-    top_indices = similarities.argsort()[-3:][::-1]
-    st.markdown("### 💡 اقتراحات ذكية من BERT:")
-    for i in top_indices:
-        st.markdown(f"- {asset_descriptions[i]} (تشابه: {similarities[i]:.2f})")
+    if query_vec is not None:
+        try:
+            similarities = cosine_similarity([query_vec], description_embeddings)[0]
+            top_indices = similarities.argsort()[-3:][::-1]
+            st.markdown("### 💡 اقتراحات ذكية من BERT:")
+            for i in top_indices:
+                st.markdown(f"- **{asset_descriptions[i]}** (التشابه: `{similarities[i]:.2f}`)")
+        except Exception as e:
+            st.error(f"❌ خطأ في حساب التشابه: {str(e)}")
