@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -10,36 +11,29 @@ st.title("📊 نظام إدارة الأصول - الهيئة الجيولوج�
 df = pd.read_excel("assetv4.xlsx", header=1)
 df.columns = df.columns.str.strip()
 
-# تهيئة نموذج TF-IDF (مُضاف)
-descriptions_list = df['Asset Description For Maintenance Purpose'].dropna().tolist()
+# إعداد البيانات لـ TF-IDF
+asset_descriptions = df["Asset Description For Maintenance Purpose"].dropna().astype(str).unique()
 vectorizer = TfidfVectorizer()
-tfidf_matrix = vectorizer.fit_transform(descriptions_list)
+tfidf_matrix = vectorizer.fit_transform(asset_descriptions)
+descriptions_list = asset_descriptions.tolist()
 
-# أسماء عربية للعرض
+# تعريب الحقول
 arabic_labels = {
-    "Custodian": "المستلم", "Consolidated Code": "الرمز الموحد", 
-    "Unique Asset Number in MoF system": "الرقم الموحد في وزارة المالية",
-    "Linked/Associated Asset": "الأصل المرتبط", 
-    "Unique Asset Number in the entity": "الرقم الموحد في الجهة",
-    "Asset Description": "وصف الأصل", "Tag number": "رقم الوسم", 
-    "Base Unit of Measure": "وحدة القياس",
-    "Quantity": "الكمية", "Manufacturer": "الشركة المصنعة", 
-    "Date Placed in Service": "تاريخ التشغيل",
-    "Cost": "التكلفة", "Depreciation amount": "مبلغ الإهلاك", 
-    "Accumulated Depreciation": "الإهلاك المتراكم",
-    "Residual Value": "القيمة المتبقية", "Net Book Value": "القيمة الدفترية", 
-    "Useful Life": "العمر الإنتاجي",
-    "Remaining useful life": "العمر المتبقي", "Country": "الدولة", 
-    "Region": "المنطقة", "City": "المدينة",
-    "Geographical Coordinates": "الإحداثيات الجغرافية", 
-    "National Address ID": "العنوان الوطني",
-    "Building Number": "رقم المبنى", "Floors Number": "عدد الطوابق", 
-    "Room/office Number": "رقم الغرفة / المكتب"
+    "Custodian": "المستلم", "Consolidated Code": "الرمز الموحد", "Unique Asset Number in MoF system": "الرقم الموحد في وزارة المالية",
+    "Linked/Associated Asset": "الأصل المرتبط", "Unique Asset Number in the entity": "الرقم الموحد في الجهة",
+    "Asset Description": "وصف الأصل", "Tag number": "رقم الوسم", "Base Unit of Measure": "وحدة القياس",
+    "Quantity": "الكمية", "Manufacturer": "الشركة المصنعة", "Date Placed in Service": "تاريخ التشغيل",
+    "Cost": "التكلفة", "Depreciation amount": "مبلغ الإهلاك", "Accumulated Depreciation": "الإهلاك المتراكم",
+    "Residual Value": "القيمة المتبقية", "Net Book Value": "القيمة الدفترية", "Useful Life": "العمر الإنتاجي",
+    "Remaining useful life": "العمر المتبقي", "Country": "الدولة", "Region": "المنطقة", "City": "المدينة",
+    "Geographical Coordinates": "الإحداثيات الجغرافية", "National Address ID": "العنوان الوطني",
+    "Building Number": "رقم المبنى", "Floors Number": "عدد الطوابق", "Room/office Number": "رقم الغرفة / المكتب"
 }
 
-# التبويبات
-tab1, tab2 = st.tabs(["🔎 البحث عن أصل", "🤖 التصنيف المحاسبي الذكي"])
+# تبويبات
+tab1, tab2 = st.tabs(["🔍 البحث عن أصل", "🤖 التصنيف المحاسبي الذكي"])
 
+# تبويب البحث
 with tab1:
     try:
         search_input = st.text_input("🔍 ابحث باسم الأصل").strip().lower()
@@ -49,10 +43,8 @@ with tab1:
 
         if filtered_options:
             selected_description = st.selectbox("📄 اختر الأصل من القائمة:", filtered_options, key="select_asset_desc")
-
             asset_row = df[df["Asset Description For Maintenance Purpose"] == selected_description].iloc[0]
 
-            # عرض المعلومات العامة
             general_fields = [
                 "Custodian", "Consolidated Code", "Unique Asset Number in MoF system",
                 "Linked/Associated Asset", "Unique Asset Number in the entity", "Asset Description", "Tag number",
@@ -61,8 +53,8 @@ with tab1:
                 "Useful Life", "Remaining useful life", "Country", "Region", "City",
                 "Geographical Coordinates", "National Address ID", "Building Number", "Floors Number", "Room/office Number"
             ]
-            general_data = {field: asset_row.get(field) for field in general_fields if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available"}
 
+            general_data = {field: asset_row.get(field) for field in general_fields if pd.notna(asset_row.get(field)) and asset_row.get(field) != "Not Available"}
             geo = general_data.pop("Geographical Coordinates", None)
 
             st.subheader("📋 المعلومات العامة")
@@ -83,12 +75,12 @@ with tab1:
                     return "غير متوفر" if pd.isna(val) or val == "" else val
 
                 accounting_df = pd.DataFrame([
-                    ["🎯 " + get_safe("Level 1 FA Module Code"), get_safe("Level 1 FA Module - English Description"), get_safe("Level 1 FA Module - Arabic Description")],
-                    ["🏷️ " + get_safe("Level 2 FA Module Code"), get_safe("Level 2 FA Module - English Description"), get_safe("Level 2 FA Module - Arabic Description")],
-                    ["🔒 " + get_safe("Level 3 FA Module Code"), get_safe("Level 3 FA Module - English Description"), get_safe("Level 3 FA Module - Arabic Description")],
-                    ["💼 " + get_safe("accounting group Code"), get_safe("accounting group English Description"), get_safe("accounting group Arabic Description")],
-                    ["📦 " + get_safe("Asset Code For Accounting Purpose"), "Asset Code For Accounting Purpose", "—"]
-                ], columns=["الكود", "الوصف بالإنجليزية", "الوصف بالعربية"])
+                    ["🎯 " + get_safe("Level 1 FA Module Code"), get_safe("Level 1 FA Module - Arabic Description"), "المستوى 1"],
+                    ["🏷️ " + get_safe("Level 2 FA Module Code"), get_safe("Level 2 FA Module - Arabic Description"), "المستوى 2"],
+                    ["🔒 " + get_safe("Level 3 FA Module Code"), get_safe("Level 3 FA Module - Arabic Description"), "المستوى 3"],
+                    ["💼 " + get_safe("accounting group Code"), get_safe("accounting group Arabic Description"), "المجموعة المحاسبية"],
+                    ["📦 " + get_safe("Asset Code For Accounting Purpose"), "Asset Code For Accounting Purpose", "الكود النهائي"]
+                ], columns=["الكود", "الوصف بالعربية", "المستوى"])
                 st.table(accounting_df)
 
         elif search_input:
@@ -96,40 +88,54 @@ with tab1:
     except Exception as e:
         st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
 
+# تبويب التصنيف الذكي
+
+# تبويب التصنيف الذكي
 with tab2:
-    user_desc = st.text_input("🧠 أدخل وصف الأصل لتصنيفه تلقائيًا:")
+    st.markdown("### 🧠 أدخل وصف الأصل لتحديد التصنيف تلقائيًا")
+    user_desc = st.text_input("✍️ وصف الأصل")
 
     if user_desc:
-        found = False
-        for word in user_desc.split():
-            user_vec = vectorizer.transform([word])
-            similarities = cosine_similarity(user_vec, tfidf_matrix)
-            top_index = similarities.argmax()
-            top_desc = descriptions_list[top_index]
-            match_row = df[df['Asset Description For Maintenance Purpose'] == top_desc].iloc[0]
-            
-            table_data = [
-                ['🎯 ' + str(match_row.get('Level 1 FA Module Code', '—')), 
-                 match_row.get('Level 1 FA Module - Arabic Description', '—'), 
-                 'المستوى 1'],
-                ['🏷️ ' + str(match_row.get('Level 2 FA Module Code', '—')), 
-                 match_row.get('Level 2 FA Module - Arabic Description', '—'), 
-                 'المستوى 2'],
-                ['🔒 ' + str(match_row.get('Level 3 FA Module Code', '—')), 
-                 match_row.get('Level 3 FA Module - Arabic Description', '—'), 
-                 'المستوى 3'],
-                ['💼 ' + str(match_row.get('accounting group Code', '—')), 
-                 match_row.get('accounting group Arabic Description', '—'), 
-                 'المجموعة المحاسبية'],
-                ['📦 ' + str(match_row.get('Asset Code For Accounting Purpose', '—')), 
-                 'Asset Code For Accounting Purpose', 
-                 'الكود النهائي']
-            ]
-            
-            st.markdown('### 📘 نتيجة التصنيف')
-            st.table(pd.DataFrame(table_data, columns=['الكود', 'الوصف بالعربية', 'المستوى']))
-            found = True
-            break
+        # اقتراحات فورية
+        user_vec = vectorizer.transform([user_desc])
+        similarities = cosine_similarity(user_vec, tfidf_matrix)
+        top_indices = similarities.argsort()[0][-5:][::-1]  # أفضل 5 أوصاف
 
-        if not found:
-            st.error("❌ لا يمكن تحديد التصنيف بناءً على هذا الوصف.")
+        suggestions = [descriptions_list[i] for i in top_indices if similarities[0][i] > 0][:3]  # أعلى 3 فقط
+
+        if suggestions:
+            st.markdown("#### 💡 اقتراحات مشابهة:")
+            for s in suggestions:
+                st.markdown(f"- {s}")
+
+        # التصنيف باستخدام أعلى وصف مطابق
+        top_index = similarities.argmax()
+        top_desc = descriptions_list[top_index]
+        match_row = df[df["Asset Description For Maintenance Purpose"] == top_desc].iloc[0]
+
+        table_data = [
+            ["🎯 " + str(match_row.get("Level 1 FA Module Code", "—")), match_row.get("Level 1 FA Module - Arabic Description", "—"), "المستوى 1"],
+            ["🏷️ " + str(match_row.get("Level 2 FA Module Code", "—")), match_row.get("Level 2 FA Module - Arabic Description", "—"), "المستوى 2"],
+            ["🔒 " + str(match_row.get("Level 3 FA Module Code", "—")), match_row.get("Level 3 FA Module - Arabic Description", "—"), "المستوى 3"],
+            ["💼 " + str(match_row.get("accounting group Code", "—")), match_row.get("accounting group Arabic Description", "—"), "المجموعة المحاسبية"],
+            ["📦 " + str(match_row.get("Asset Code For Accounting Purpose", "—")), "Asset Code For Accounting Purpose", "الكود النهائي"]
+        ]
+        st.markdown("### 📘 نتيجة التصنيف")
+        st.table(pd.DataFrame(table_data, columns=["الكود", "الوصف بالعربية", "المستوى"]))
+
+    if user_desc:
+        user_vec = vectorizer.transform([user_desc])
+        similarities = cosine_similarity(user_vec, tfidf_matrix)
+        top_index = similarities.argmax()
+        top_desc = descriptions_list[top_index]
+        match_row = df[df["Asset Description For Maintenance Purpose"] == top_desc].iloc[0]
+
+        table_data = [
+            ["🎯 " + str(match_row.get("Level 1 FA Module Code", "—")), match_row.get("Level 1 FA Module - Arabic Description", "—"), "المستوى 1"],
+            ["🏷️ " + str(match_row.get("Level 2 FA Module Code", "—")), match_row.get("Level 2 FA Module - Arabic Description", "—"), "المستوى 2"],
+            ["🔒 " + str(match_row.get("Level 3 FA Module Code", "—")), match_row.get("Level 3 FA Module - Arabic Description", "—"), "المستوى 3"],
+            ["💼 " + str(match_row.get("accounting group Code", "—")), match_row.get("accounting group Arabic Description", "—"), "المجموعة المحاسبية"],
+            ["📦 " + str(match_row.get("Asset Code For Accounting Purpose", "—")), "Asset Code For Accounting Purpose", "الكود النهائي"]
+        ]
+        st.markdown("### 📘 نتيجة التصنيف")
+        st.table(pd.DataFrame(table_data, columns=["الكود", "الوصف بالعربية", "المستوى"]))
