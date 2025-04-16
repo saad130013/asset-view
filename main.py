@@ -82,30 +82,34 @@ with tab1:
         st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
 
 with tab2:
-    st.markdown("### 🤖 تصنيف محاسبي تلقائي")
-    user_desc = st.text_input("✍️ أدخل وصف الأصل").strip().lower()
-
-    desc_df = df[[
-        "Asset Description",
-        "Level 1 FA Module - Arabic Description",
-        "Level 2 FA Module - Arabic Description",
-        "Level 3 FA Module - Arabic Description",
-        "accounting group Arabic Description"
-    ]].dropna().drop_duplicates()
-
-    classification_map = {}
-    for _, row in desc_df.iterrows():
-        words = str(row["Asset Description"]).strip().lower().split()
-        for word in words:
-            if word not in classification_map:
-                classification_map[word] = {
-                    "Level 1": row["Level 1 FA Module - Arabic Description"],
-                    "Level 2": row["Level 2 FA Module - Arabic Description"],
-                    "Level 3": row["Level 3 FA Module - Arabic Description"],
-                    "Group": row["accounting group Arabic Description"]
-                }
 
     if user_desc:
+        found = False
+        for word in user_desc.split():
+            if word in classification_map:
+                result = classification_map[word]
+                st.success("✅ تم التعرف على التصنيف:")
+
+                code_1 = df[df["Level 1 FA Module - Arabic Description"] == result["Level 1"]]["Level 1 FA Module Code"].dropna().astype(str).values
+                code_2 = df[df["Level 2 FA Module - Arabic Description"] == result["Level 2"]]["Level 2 FA Module Code"].dropna().astype(str).values
+                code_3 = df[df["Level 3 FA Module - Arabic Description"] == result["Level 3"]]["Level 3 FA Module Code"].dropna().astype(str).values
+                code_g = df[df["accounting group Arabic Description"] == result["Group"]]["accounting group Code"].dropna().astype(str).values
+                code_f = df[df["Asset Description"] == word]["Asset Code For Accounting Purpose"].dropna().astype(str).values
+
+                table_data = [
+                    ["🎯 " + (code_1[0] if len(code_1) > 0 else "—"), result["Level 1"], "المستوى 1"],
+                    ["🏷️ " + (code_2[0] if len(code_2) > 0 else "—"), result["Level 2"], "المستوى 2"],
+                    ["🔒 " + (code_3[0] if len(code_3) > 0 else "—"), result["Level 3"], "المستوى 3"],
+                    ["💼 " + (code_g[0] if len(code_g) > 0 else "—"), result["Group"], "المجموعة المحاسبية"],
+                    ["📦 " + (code_f[0] if len(code_f) > 0 else "—"), "Asset Code For Accounting Purpose", "الكود النهائي"]
+                ]
+                st.markdown("### 📘 نتيجة التصنيف")
+                st.table(pd.DataFrame(table_data, columns=["الكود", "الوصف بالعربية", "المستوى"]))
+                found = True
+                break
+        if not found:
+            st.error("❌ لا يمكن تحديد التصنيف بناءً على هذا الوصف.")
+
         found = False
         for word in user_desc.split():
             if word in classification_map:
