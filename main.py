@@ -2,8 +2,8 @@
 import streamlit as st
 import pandas as pd
 
-    st.set_page_config(page_title="نظام إدارة الأصول", layout="wide")
-    st.markdown("""
+st.set_page_config(page_title="نظام إدارة الأصول", layout="wide")
+st.markdown("""
 <style>
     body {
         background-color: #f8f9fa;
@@ -35,7 +35,7 @@ import pandas as pd
 </style>
 """, unsafe_allow_html=True)
 
-    st.title("📊 نظام إدارة الأصول - الهيئة الجيولوجية السعودية")
+st.title("📊 نظام إدارة الأصول - الهيئة الجيولوجية السعودية")
 
 tab1, tab2 = st.tabs(["🔎 البحث عن أصل", "🤖 التصنيف المحاسبي الذكي"])
 
@@ -72,7 +72,7 @@ arabic_labels = {
     "Room/office Number": "رقم الغرفة / المكتب"
 }
 
-    try:
+try:
     df = pd.read_excel("assetv4.xlsx", header=1)
     df.columns = df.columns.str.strip()
 
@@ -137,12 +137,12 @@ arabic_labels = {
     elif search_input:
         st.warning("❌ لا توجد أصول مطابقة للبحث.")
 except Exception as e:
-    st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
+st.error(f"❌ حدث خطأ أثناء تحميل أو معالجة الملف: {str(e)}")
 
 
 
 with tab2:
-    st.markdown("### 🤖 تصنيف محاسبي تلقائي باستخدام الذكاء الصناعي")
+st.markdown("### 🤖 تصنيف محاسبي تلقائي باستخدام الذكاء الصناعي")
     user_desc = st.text_input("✍️ أدخل وصف الأصل").strip().lower()
     
     # بناء قاعدة مبسطة من الملف
