@@ -33,8 +33,7 @@ with tab1:
         ]["Asset Description For Maintenance Purpose"].dropna().unique().tolist()
 
         if filtered_options:
-            selected_description = st.selectbox("📄 اختر الأصل من القائمة:", filtered_options)
-            selected_description = st.selectbox("📄 اختر الأصل من القائمة:", filtered_options)
+            selected_description = st.selectbox("📄 اختر الأصل من القائمة:", filtered_options, key="select_asset_desc")
 
             asset_row = df[df["Asset Description For Maintenance Purpose"] == selected_description].iloc[0]
 
